@@ -7,6 +7,9 @@ const http = require("http");
 const { Server } = require("socket.io");
 require("dotenv").config();
 
+
+const passagerRouter = require("./routes/passager/authRoute");
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -27,6 +30,8 @@ app.use(
   })
 );
 
+app.use("/passager", passagerRouter);
+
 mongoose
   .connect(process.env.MONGO_URI, {
     //useNewUrlParser: true,
@@ -34,6 +39,9 @@ mongoose
   })
   .then(() => {
     console.log("MongoDB connected");
+    app.listen(process.env.PORT, () => {
+      console.log(`Server is running on port ${process.env.PORT}`);
+    });
   })
   .catch((error) => {
     console.error("Error connecting to MongoDB:", error);
