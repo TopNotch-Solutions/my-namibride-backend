@@ -8,10 +8,6 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    profileImage: {
-        type: String,
-        required: false
-    },
     walletID:{
         type: String,
         required: true,
@@ -31,6 +27,10 @@ const userSchema = new mongoose.Schema({
         enum: ['passager', 'driver', 'fleet'],
         default: 'passager',
         required: true
+    },
+    profileImage:{
+        type: String,
+        required: false
     },
     verifiedCellphoneNumber: {
         type: String,

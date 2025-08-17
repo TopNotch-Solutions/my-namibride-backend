@@ -3,7 +3,8 @@ const OTP = require("../../models/otp");
 const bcrypt = require("bcrypt");
 const User = require("../../models/user");
 const walletIDGenerator = require("../../utils/walletGenerator");
-const { messaging } = require("firebase-admin");
+const path = require("path");
+const fs = require("fs");
 
 exports.sendOtp = async (req, res) => {
   const { cellphone_number } = req.body;
@@ -213,3 +214,76 @@ exports.update = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+exports.profileImage = async (req, res) => {
+  const { id } = req.params;
+  const profileImage = req.file ? req.file.filename : null;
+
+  if (!id) {
+    return res.status(400).json({ message: "Please pass user id" });
+  }
+
+  try{
+    
+    const user = await User.findOne({_id: id});
+    if(!user){
+      return res.status(404).json({ message: "User does not exist" });
+    }
+
+    if(user && user.profileImage){
+      const profileImagePath = path.join("public", "profiles", user.profileImage);
+      if (fs.existsSync(profileImagePath)) {
+        fs.unlinkSync(profileImagePath);
+      }
+    }
+     const updatedUser = await User.findByIdAndUpdate(
+      id,  
+    { profileImage: profileImage },
+      { new: true }  
+    );
+    return res.status(200).json({
+      success: true,
+      message: "User successfully updated", 
+      user: updatedUser
+    });
+  }catch (error) {
+    console.error("Error updating user:", error);  
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+exports.removeImage = async (req, res) => {
+  const { id } = req.params;
+
+  if (!id) {
+    return res.status(400).json({ message: "Please pass user id" });
+  }
+
+  try{
+
+    const user = await User.findOne({_id: id});
+    if(!user){
+      return res.status(404).json({ message: "User does not exist" });
+    }
+
+    if(user && user.profileImage){
+      const profileImagePath = path.join("public", "profiles", user.profileImage);
+      if (fs.existsSync(profileImagePath)) {
+        fs.unlinkSync(profileImagePath);
+      }
+    }
+     const updatedUser = await User.findByIdAndUpdate(
+      id,  
+    { profileImage: null },
+      { new: true }  
+    );
+    return res.status(200).json({
+      success: true,
+      message: "Image successfully removed", 
+      user: updatedUser
+    });
+  }catch (error) {
+    console.error("Error updating user:", error);  
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
