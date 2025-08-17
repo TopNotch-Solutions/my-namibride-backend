@@ -67,7 +67,7 @@ exports.resendOtp = async (req, res) => {
     const hashedOTP = await bcrypt.hash(otp, salt);
     await OTP.deleteMany({ cellphoneNumber: cellphone_number }); // Remove any existing OTP for this number
     await OTP.create({
-      cellphoneNumber: cellphone_number, // Use the correct field name
+      cellphoneNumber: cellphone_number, 
       otp: hashedOTP,
       createdAt: createdAt,
       expireAt: expireAt,
@@ -115,7 +115,7 @@ exports.verifyOtp = async (req, res) => {
     if (currentTime > otpRecord.expireAt) {
       return res.status(400).json({ message: "OTP has expired" });
     }
-    // OTP is valid, proceed with registration or verification
+    
     let walletId;
     let isWalletIdUnique = false;
     let attempts = 0;
@@ -129,7 +129,7 @@ exports.verifyOtp = async (req, res) => {
 
       const checkWalletID = await User.findOne({ walletID: walletId });
       if (!checkWalletID) {
-        isWalletIdUnique = true; // The generated walletId is unique, exit the loop
+        isWalletIdUnique = true; 
       }
       attempts++;
     }
@@ -141,8 +141,8 @@ exports.verifyOtp = async (req, res) => {
       role: "passager",
       cellphoneNumber: cellphoneNumber,
       walletID: walletId,
-      verifiedCellphoneNumber: cellphoneNumber, // Assuming verification is done at registration
-      isAccountVerified: true, // Set account as verified
+      verifiedCellphoneNumber: cellphoneNumber,
+      isAccountVerified: true, 
     });
     await OTP.deleteOne({ cellphoneNumber: cellphoneNumber });
     res
@@ -166,7 +166,7 @@ exports.update = async (req, res) => {
   }
 
   try {
-    // Build update object with only provided fields
+    
     const updateFields = {};
     
     if (fullname !== undefined) {
@@ -174,8 +174,6 @@ exports.update = async (req, res) => {
     }
     
     if (cellphoneNumber !== undefined) {
-      updateFields.cellphoneNumber = cellphoneNumber;
-      // Also update verifiedCellphoneNumber if needed
       updateFields.verifiedCellphoneNumber = cellphoneNumber;
     }
     
@@ -183,16 +181,14 @@ exports.update = async (req, res) => {
       updateFields.address = address;
     }
 
-    // Check if at least one field is being updated
     if (Object.keys(updateFields).length === 0) {
       return res.status(400).json({ message: "No fields provided for update" });
     }
 
-    // Update user - using correct MongoDB syntax
     const updatedUser = await User.findByIdAndUpdate(
-      id,  // Just the ID, not wrapped in object
+      id, 
       updateFields,
-      { new: true }  // Return updated document
+      { new: true }  
     );
 
     if (!updatedUser) {
