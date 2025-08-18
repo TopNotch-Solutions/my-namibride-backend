@@ -18,6 +18,11 @@ const userSchema = new mongoose.Schema({
         required: true,
         default: 0.00,
     },
+    PreviousBalance: {
+        type: Number,
+        required: true,
+        default: 0.00,
+    },
     address: {
         type: String,
         required: false,
