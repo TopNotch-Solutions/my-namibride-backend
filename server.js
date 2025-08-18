@@ -9,6 +9,7 @@ require("dotenv").config();
 
 
 const passagerRouter = require("./routes/passager/authRoute");
+const authDriverRouter = require("./routes/driver/authRouter");
 
 const app = express();
 const server = http.createServer(app);
@@ -30,7 +31,8 @@ app.use(
   })
 );
 
-app.use("/passager", passagerRouter);
+app.use("/passager/auth", passagerRouter);
+app.use("/driver/auth", authDriverRouter);
 
 mongoose
   .connect(process.env.MONGO_URI, {

@@ -120,10 +120,11 @@ exports.verifyOtp = async (req, res) => {
       isAccountVerified: true,
     });
     if (accountAlreadyExists) {
+        console.log("Alreadyyyy81")
       return  res
       .status(201)
       .json({
-        message: "OTP verified successfully & Passager successfully created",
+        message: "OTP verified successfully & Driver successfully created",
         user: accountAlreadyExists,
       });
     }
@@ -149,7 +150,7 @@ exports.verifyOtp = async (req, res) => {
       return res.status(500).json({ message: "Failed to generate a unique wallet ID after multiple attempts." });
     }
     const user = await User.create({
-      role: "passager",
+      role: "driver",
       cellphoneNumber: cellphoneNumber,
       walletID: walletId,
       verifiedCellphoneNumber: cellphoneNumber,
@@ -159,7 +160,7 @@ exports.verifyOtp = async (req, res) => {
    return res
       .status(201)
       .json({
-        message: "OTP verified successfully & Passager successfully created",
+        message: "OTP verified successfully & Driver successfully created",
         user,
       });
   } catch (error) {
@@ -167,134 +168,3 @@ exports.verifyOtp = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
-exports.update = async (req, res) => {
-  const { fullname, cellphoneNumber, address } = req.body;
-  const { id } = req.params;
-
-  if (!id) {
-    return res.status(400).json({ message: "Please pass user id" });
-  }
-
-  try {
-    
-    const updateFields = {};
-    
-    if (fullname !== undefined) {
-      updateFields.fullname = fullname;
-    }
-    
-    if (cellphoneNumber !== undefined) {
-      updateFields.verifiedCellphoneNumber = cellphoneNumber;
-    }
-    
-    if (address !== undefined) {
-      updateFields.address = address;
-    }
-
-    if (Object.keys(updateFields).length === 0) {
-      return res.status(400).json({ message: "No fields provided for update" });
-    }
-
-    const updatedUser = await User.findByIdAndUpdate(
-      id, 
-      updateFields,
-      { new: true }  
-    );
-
-    if (!updatedUser) {
-      return res.status(404).json({ message: "User does not exist" });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: "User successfully updated", 
-      user: updatedUser
-    });
-
-  } catch (error) {
-    console.error("Error updating user:", error);
-    if (error.name === 'CastError') {
-      return res.status(400).json({ message: "Invalid user ID format" });
-    }
-    
-    res.status(500).json({ message: "Internal server error" });
-  }
-};
-
-exports.profileImage = async (req, res) => {
-  const { id } = req.params;
-  const profileImage = req.file ? req.file.filename : null;
-  console.log("My i:", profileImage)
-  if (!id) {
-    return res.status(400).json({ message: "Please pass user id" });
-  }
-
-  if (!profileImage) {
-    return res.status(400).json({ message: "Please pass profile image" });
-  }
-
-  try{
-    
-    const user = await User.findOne({_id: id});
-    if(!user){
-      return res.status(404).json({ message: "User does not exist" });
-    }
-
-    if(user && user.profileImage){
-      const profileImagePath = path.join("public", "profiles", user.profileImage);
-      if (fs.existsSync(profileImagePath)) {
-        fs.unlinkSync(profileImagePath);
-      }
-    }
-     const updatedUser = await User.findByIdAndUpdate(
-      id,  
-    { profileImage: profileImage },
-      { new: true }  
-    );
-    return res.status(200).json({
-      success: true,
-      message: "User successfully updated", 
-      user: updatedUser
-    });
-  }catch (error) {
-    console.error("Error updating user:", error);  
-    res.status(500).json({ message: "Internal server error" });
-  }
-}
-
-exports.removeImage = async (req, res) => {
-  const { id } = req.params;
-
-  if (!id) {
-    return res.status(400).json({ message: "Please pass user id" });
-  }
-
-  try{
-
-    const user = await User.findOne({_id: id});
-    if(!user){
-      return res.status(404).json({ message: "User does not exist" });
-    }
-
-    if(user && user.profileImage){
-      const profileImagePath = path.join("public", "profiles", user.profileImage);
-      if (fs.existsSync(profileImagePath)) {
-        fs.unlinkSync(profileImagePath);
-      }
-    }
-     const updatedUser = await User.findByIdAndUpdate(
-      id,  
-    { profileImage: null },
-      { new: true }  
-    );
-    return res.status(200).json({
-      success: true,
-      message: "Image successfully removed", 
-      user: updatedUser
-    });
-  }catch (error) {
-    console.error("Error updating user:", error);  
-    res.status(500).json({ message: "Internal server error" });
-  }
-}
