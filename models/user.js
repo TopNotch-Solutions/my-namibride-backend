@@ -33,6 +33,42 @@ const userSchema = new mongoose.Schema({
         default: 'passager',
         required: true
     },
+    driverIDFront: {
+        type: String,
+        required: false,
+    },
+    driverIDback: {
+        type: String,
+        required: false,
+    },
+    licenseFront: {
+        type: String,
+        required: false,
+    },
+    licenseBack: {
+        type: String,
+        required: false,
+    },
+    frontSeats: {
+        type: String,
+        required: false,
+    },
+    licensePlate: {
+        type: String,
+        required: false,
+    },
+    rearSeats: {
+        type: String,
+        required: false,
+    },
+    badge: {
+        type: String,
+        required: false,
+    },
+    drivingZone: {
+        type: String,
+        required: false,
+    },
     profileImage:{
         type: String,
         required: false
@@ -41,10 +77,20 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    visibility:{
+        type: String,
+        enum: ['Online', 'Offline'],
+        default: 'Offline',
+        required: false
+    },
+    accountDeactivation:{
+        type: Boolean,
+        default: false
+    },
     isAccountVerified: {
         type: Boolean,
         default: false
-    }
+    },
 })
 
 const User = mongoose.model('user', userSchema);
