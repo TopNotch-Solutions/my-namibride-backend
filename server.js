@@ -11,6 +11,7 @@ require("dotenv").config();
 const passagerRouter = require("./routes/passager/authRoute");
 const authDriverRouter = require("./routes/driver/authRouter");
 const issuePassagerRouter = require("./routes/passager/issueRoute");
+const issueDriverRouter = require("./routes/driver/issueRoute");
 
 const app = express();
 const server = http.createServer(app);
@@ -37,6 +38,8 @@ app.use("/passager/issue", issuePassagerRouter)
 
 
 app.use("/driver/auth", authDriverRouter);
+app.use("/driver/issue", issueDriverRouter);
+
 
 mongoose
   .connect(process.env.MONGO_URI, {
