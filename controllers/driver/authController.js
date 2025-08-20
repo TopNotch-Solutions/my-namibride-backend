@@ -6,6 +6,45 @@ const walletIDGenerator = require("../../utils/walletGenerator");
 const path = require("path");
 const fs = require("fs");
 
+const updateFile = async (id, fieldName, filename, res) => {
+  try {
+
+    const user = await User.findOne({_id: id});
+    if(!user){
+      return res.status(404).json({ message: "User does not exist" });
+    }
+    if(user['isDocumentVerified']){
+      return res.status(409).json({ message: "Documents has already been approved. Please contact your admin." });
+    }
+
+    if(user && user[fieldName]){
+          const profileImagePath = path.join("public", "drivers", user[fieldName]);
+          if (fs.existsSync(profileImagePath)) {
+            console.log("Removing previous", profileImagePath)
+            fs.unlinkSync(profileImagePath);
+          }
+        }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      { [fieldName]: filename ,isDriverProfileImageVerified: false},
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.status(200).json({
+      message: `User successfully updated`,
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error(`Error updating ${fieldName}:`, error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 exports.sendOtp = async (req, res) => {
   const { cellphone_number } = req.body;
 
@@ -117,7 +156,7 @@ exports.verifyOtp = async (req, res) => {
     });
     if (accountAlreadyExists) {
       console.log("Alreadyyyy81");
-      return res.status(201).json({
+      return res.status(200).json({
         message: "OTP verified successfully & Driver successfully created",
         user: accountAlreadyExists,
       });
@@ -169,11 +208,12 @@ exports.verifyOtp = async (req, res) => {
 exports.registerDocuments = async (req, res) => {
   const { id } = req.params;
    const files = req.files;
+   console.log(files, id, req.body)
   const {
     driverFullName,
-    driverCellphone,
     driverAddress,
     licensePlate,
+    carModel,
     drivingZone,
   } = req.body;
   const driverIdFront = files.driverIdFront
@@ -201,11 +241,6 @@ exports.registerDocuments = async (req, res) => {
   }
   if (!driverFullName) {
     return res.status(400).json({ message: "Driver fullname is required" });
-  }
-  if (!driverCellphone) {
-    return res
-      .status(400)
-      .json({ message: "Driver cellphone number is required" });
   }
   if (!driverAddress) {
     return res.status(400).json({ message: "Address is required" });
@@ -237,25 +272,25 @@ exports.registerDocuments = async (req, res) => {
   if (!badgeImage) {
     return res.status(400).json({ message: "Badge is required" });
   }
+  if (!carModel) {
+    return res.status(400).json({ message: "Car model is required" });
+  }
   try {
     const existingDriver = await User.findOne({ licensePlate });
     if (existingDriver) {
       return res.status(409).json({ message: "Vehicle already in use." });
     }
 
-    const existingCellphone = await User.findOne({ cellphoneNumber: driverCellphone});
-    if (existingCellphone) {
-      return res.status(409).json({ message: "Driver already assigned." });
-    }
     const newDriver = await User.findByIdAndUpdate(
       { _id: id,
        },
       {
         fullname: driverFullName,
-        cellphoneNumber: driverCellphone,
         address: driverAddress,
         drivingZone,
         licensePlate,
+        carModel,
+        isDocumentsSubmitted: true,
         driverIDFront: driverIdFront,
         driverIDback: driverIdBack,
         licenseFront: driverLicenseFront,
@@ -279,3 +314,115 @@ exports.registerDocuments = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+exports.updateDriverIdFront = async (req, res) => {
+  const { id } = req.params;
+  const driverIdFront = req.file ? req.file.filename : null;
+
+  console.log(id, driverIdFront)
+
+  if (!id || !driverIdFront) {
+    return res.status(400).json({ message: "User ID and file are required" });
+  }
+  await updateFile(id, "driverIDFront", driverIdFront, res);
+};
+
+exports.updateDriverIdBack = async (req, res) => {
+  const { id } = req.params;
+  const driverIdBack = req.file ? req.file.filename : null;
+
+  if (!id || !driverIdBack) {
+    return res.status(400).json({ message: "User ID and file are required" });
+  }
+  await updateFile(id, "driverIDback", driverIdBack, res);
+};
+
+exports.updateDriverLicenseFront = async (req, res) => {
+  const { id } = req.params;
+  const driverLicenseFront = req.file ? req.file.filename : null;
+
+  if (!id || !driverLicenseFront) {
+    return res.status(400).json({ message: "User ID and file are required" });
+  }
+  await updateFile(id, "licenseFront", driverLicenseFront, res);
+};
+
+exports.updateDriverLicenseBack = async (req, res) => {
+  const { id } = req.params;
+  const driverLicenseBack = req.file ? req.file.filename : null;
+
+  if (!id || !driverLicenseBack) {
+    return res.status(400).json({ message: "User ID and file are required" });
+  }
+  await updateFile(id, "licenseBack", driverLicenseBack, res);
+};
+
+exports.updateFrontSeatsImage = async (req, res) => {
+  const { id } = req.params;
+  const frontSeatsImage = req.file ? req.file.filename : null;
+
+  if (!id || !frontSeatsImage) {
+    return res.status(400).json({ message: "User ID and file are required" });
+  }
+  await updateFile(id, "frontSeats", frontSeatsImage, res);
+};
+
+exports.updateRearSeatsImage = async (req, res) => {
+  const { id } = req.params;
+  const rearSeatsImage = req.file ? req.file.filename : null;
+
+  if (!id || !rearSeatsImage) {
+    return res.status(400).json({ message: "User ID and file are required" });
+  }
+  await updateFile(id, "rearSeats", rearSeatsImage, res);
+};
+
+exports.updateBadgeImage = async (req, res) => {
+  const { id } = req.params;
+  const badgeImage = req.file ? req.file.filename : null;
+
+  if (!id || !badgeImage) {
+    return res.status(400).json({ message: "User ID and file are required" });
+  }
+  await updateFile(id, "badge", badgeImage, res);
+};
+
+exports.profileImage = async (req, res) => {
+  const { id } = req.params;
+  const profileImage = req.file ? req.file.filename : null;
+  console.log("My i:", profileImage)
+  if (!id) {
+    return res.status(400).json({ message: "Please pass user id" });
+  }
+
+  if (!profileImage) {
+    return res.status(400).json({ message: "Please pass profile image" });
+  }
+
+  try{
+    
+    const user = await User.findOne({_id: id});
+    if(!user){
+      return res.status(404).json({ message: "User does not exist" });
+    }
+
+    if(user && user.profileImage){
+      const profileImagePath = path.join("public", "profiles", user.profileImage);
+      if (fs.existsSync(profileImagePath)) {
+        fs.unlinkSync(profileImagePath);
+      }
+    }
+     const updatedUser = await User.findByIdAndUpdate(
+      id,  
+    { profileImage: profileImage,isDriverProfileImageVerified: false },
+      { new: true }  
+    );
+    return res.status(200).json({
+      success: true,
+      message: "User successfully updated", 
+      user: updatedUser
+    });
+  }catch (error) {
+    console.error("Error updating user:", error);  
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
