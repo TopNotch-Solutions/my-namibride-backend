@@ -12,6 +12,7 @@ const passagerRouter = require("./routes/passager/authRoute");
 const authDriverRouter = require("./routes/driver/authRouter");
 const issuePassagerRouter = require("./routes/passager/issueRoute");
 const issueDriverRouter = require("./routes/driver/issueRoute");
+const transactionPassagerRouter = require("./routes/passager/transactionRouter");
 
 const app = express();
 const server = http.createServer(app);
@@ -34,7 +35,8 @@ app.use(
 );
 
 app.use("/passager/auth", passagerRouter);
-app.use("/passager/issue", issuePassagerRouter)
+app.use("/passager/issue", issuePassagerRouter);
+app.use("/passager/transaction", transactionPassagerRouter)
 
 
 app.use("/driver/auth", authDriverRouter);
