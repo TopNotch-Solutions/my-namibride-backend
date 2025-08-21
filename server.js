@@ -13,6 +13,7 @@ const authDriverRouter = require("./routes/driver/authRouter");
 const issuePassagerRouter = require("./routes/passager/issueRoute");
 const issueDriverRouter = require("./routes/driver/issueRoute");
 const transactionPassagerRouter = require("./routes/passager/transactionRouter");
+const transactionDriverRouter = require("./routes/driver/transactionRouter");
 
 const app = express();
 const server = http.createServer(app);
@@ -41,6 +42,7 @@ app.use("/passager/transaction", transactionPassagerRouter)
 
 app.use("/driver/auth", authDriverRouter);
 app.use("/driver/issue", issueDriverRouter);
+app.use("/driver/transaction", transactionDriverRouter)
 
 
 mongoose
