@@ -18,13 +18,22 @@ exports.sendOtp = async (req, res) => {
       cellphoneNumber: cellphone_number,
       isAccountVerified: true,
     });
-    if (accountAlreadyExists) {
-      return res
-        .status(409)
-        .json({
+       if (accountAlreadyExists) {
+      // Check if the existing user's role is not 'passenger'
+      if (accountAlreadyExists.role !== 'passenger') {
+        // If the user has a different role, send the specific message.
+        return res.status(403).json({
+          message: `An account with this phone number is already verified.`,
+        });
+      } else {
+        // If the user is a verified passenger, you can send a different message.
+        // This prevents the user from creating a new passenger account with the same number.
+        return res.status(409).json({
           message: "An account with this phone number is already verified.",
         });
+      }
     }
+
     // Generate OTP logic here
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const createdAt = new Date();
@@ -292,6 +301,26 @@ exports.removeImage = async (req, res) => {
       success: true,
       message: "Image successfully removed", 
       user: updatedUser
+    });
+  }catch (error) {
+    console.error("Error updating user:", error);  
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+exports.userData = async (req, res) => {
+  const { id } = req.params;
+  if (!id) {
+    return res.status(400).json({ message: "Please pass user id" });
+  }
+  try{
+    const user = await User.findOne({_id: id});
+    if(!user){
+      return res.status(404).json({ message: "User does not exist" });
+    }
+    return res.status(200).json({
+      success: true,
+      message: "User Data", 
+      user
     });
   }catch (error) {
     console.error("Error updating user:", error);  

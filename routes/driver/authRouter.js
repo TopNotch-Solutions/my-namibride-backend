@@ -1,5 +1,5 @@
 const { Router } = require('express');
-const { sendOtp, resendOtp, verifyOtp, registerDocuments, updateBadgeImage, updateRearSeatsImage, updateFrontSeatsImage, updateDriverIdBack, updateDriverIdFront, updateDriverLicenseBack, updateDriverLicenseFront, profileImage} = require('../../controllers/driver/authController');
+const { sendOtp, resendOtp, verifyOtp, registerDocuments, updateBadgeImage, updateRearSeatsImage, updateFrontSeatsImage, updateDriverIdBack, updateDriverIdFront, updateDriverLicenseBack, updateDriverLicenseFront, profileImage, userData} = require('../../controllers/driver/authController');
 const { uploadMultipleDocuments } = require('../../middlewares/uploadDriverDocuments');
 const { uploadBadgeImage, uploadRearSeatsImage, uploadFrontSeatsImage, uploadDriverLicenseBack, uploadDriverLicenseFront, uploadDriverIdBack, uploadDriverIdFront } = require('../../middlewares/uploadSingle');
 const { uploadSingle } = require('../../middlewares/profileImageUploadMiddleware');
@@ -9,6 +9,8 @@ authDriverRouter.post('/send-otp', sendOtp);
 authDriverRouter.post('/resend-otp', resendOtp);
 authDriverRouter.post('/verify-otp', verifyOtp);
 authDriverRouter.put('/document-submission/:id', uploadMultipleDocuments, registerDocuments);
+
+authDriverRouter.get('/user-data/:id', userData);
 
 authDriverRouter.put('/update-id-front/:id',uploadDriverIdFront, updateDriverIdFront);
 authDriverRouter.put('/update-id-back/:id',uploadDriverIdBack, updateDriverIdBack);

@@ -426,3 +426,24 @@ exports.profileImage = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 }
+
+exports.userData = async (req, res) => {
+  const { id } = req.params;
+  if (!id) {
+    return res.status(400).json({ message: "Please pass user id" });
+  }
+  try{
+    const user = await User.findOne({_id: id});
+    if(!user){
+      return res.status(404).json({ message: "User does not exist" });
+    }
+    return res.status(200).json({
+      success: true,
+      message: "User Data", 
+      user
+    });
+  }catch (error) {
+    console.error("Error updating user:", error);  
+    res.status(500).json({ message: "Internal server error" });
+  }
+}

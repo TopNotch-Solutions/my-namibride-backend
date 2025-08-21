@@ -1,7 +1,6 @@
 const Transaction = require("../../models/transaction");
 const User = require("../../models/user");
 const generateTransactionReference = require("../../utils/generateReferrence");
-const mongoose = require("mongoose");
 
 exports.fundOwnWallet = async (req, res) => {
   const { id } = req.params;
@@ -24,54 +23,44 @@ exports.fundOwnWallet = async (req, res) => {
     return res.status(400).json({ message: "CVV is required" });
   }
 
-  const session = await mongoose.startSession();
-  session.startTransaction();
   try {
-    const user = await User.findOne({ _id: id }).session(session);
+    const user = await User.findOne({ _id: id });
     if (!user) {
-      await session.abortTransaction();
       return res.status(404).json({ message: "User not found." });
     }
-    console.log(user)
+
     const referrence = generateTransactionReference();
-    const newAmount = parseFloat(amount)
-    await Transaction.create(
-      [
-        {
-          userId: id,
-          amount: newAmount,
-          walletID: user.walletID,
-          time: new Date(),
-          referrence,
-          type: "deposit",
-          status: "pending",
-        },
-      ],
-      { session }
-    );
+    const newAmount = parseFloat(amount);
+    await Transaction.create({
+      userId: id,
+      amount: newAmount,
+      walletID: user.walletID,
+      time: new Date(),
+      referrence,
+      type: "deposit",
+      status: "pending",
+    });
 
     user.PreviousBalance = user.balance;
     user.balance = user.balance + parseFloat(amount);
-    await user.save({ session });
-    await session.commitTransaction();
+    await user.save();
 
     const userUpdated = await User.findOne({ _id: id });
+    const data = await Transaction.find({userId: id});
     return res.status(201).json({
       message: "Fund successfully deposited into own wallet.",
-      data: userUpdated,
+      user: userUpdated,
+      data
     });
   } catch (error) {
-    await session.abortTransaction();
-    console.log(error)
+    console.log(error);
     res.status(500).json({ message: "Internal server error", error });
-  } finally {
-    session.endSession();
   }
 };
 
 exports.fundSomeonesWallet = async (req, res) => {
   const { id } = req.params;
-  const { amount, cardNumber, expirayDate, cvv, walletID } = req.body;
+  const { amount, cardNumber, expiryDate, cvv, walletID } = req.body;
 
   if (!id) {
     return res.status(400).json({ message: "User id is required" });
@@ -85,56 +74,48 @@ exports.fundSomeonesWallet = async (req, res) => {
   if (!cardNumber) {
     return res.status(400).json({ message: "Card number is required" });
   }
-  if (!expirayDate) {
+  if (!expiryDate) {
     return res.status(400).json({ message: "Card expiry date is required" });
   }
   if (!cvv) {
     return res.status(400).json({ message: "CVV is required" });
   }
-  const session = await mongoose.startSession();
-  session.startTransaction();
+
   try {
-    const user = await User.findOne({ _id: id, walletID }).session(session);
+    const user = await User.findOne({ _id: id });
     if (!user) {
-      await session.abortTransaction();
       return res.status(404).json({ message: "User not found." });
     }
 
-    const userFunded = await User.findOne({ walletID }).session(session);
+    const userFunded = await User.findOne({ walletID });
     if (!userFunded) {
-      await session.abortTransaction();
       return res.status(404).json({ message: "User being funded not found." });
     }
 
     const referrence = generateTransactionReference();
-    await Transaction.create(
-      [
-        {
-          userId: id,
-          amount: amount,
-          walletID,
-          time: new Date(),
-          referrence,
-          type: "deposit",
-          status: "pending",
-        },
-      ],
-      { session }
-    );
-
+    await Transaction.create({
+      userId: id,
+      amount: amount,
+      walletID,
+      time: new Date(),
+      referrence,
+      type: "deposit",
+      status: "pending",
+    });
+    
     userFunded.PreviousBalance = userFunded.balance;
     userFunded.balance = userFunded.balance + parseFloat(amount);
-    await userFunded.save({ session });
-    await session.commitTransaction();
+    await userFunded.save();
 
+    const userUpdated = await User.findOne({ _id: id });
+    const data = await Transaction.find({userId: id});
     return res.status(201).json({
       message: "Transaction created successfully.",
+       user: userUpdated, 
+      data
     });
   } catch (error) {
-    await session.abortTransaction();
     res.status(500).json({ message: "Internal server error", error });
-  } finally {
-    session.endSession();
   }
 };
 
@@ -151,67 +132,57 @@ exports.wallet2Wallet = async (req, res) => {
   if (!amount) {
     return res.status(400).json({ message: "Amount is required" });
   }
-  const session = await mongoose.startSession();
-  session.startTransaction();
+
   try {
-    const user = await User.findOne({ _id: id }).session(session);
+    const user = await User.findOne({ _id: id });
     if (!user) {
-      await session.abortTransaction();
       return res.status(404).json({ message: "User not found." });
     }
 
-    const userFunded = await User.findOne({ walletID }).session(session);
+    const userFunded = await User.findOne({ walletID });
     if (!userFunded) {
-      await session.abortTransaction();
       return res.status(404).json({ message: "User being funded not found." });
     }
 
     if (user.balance <= 0) {
-      await session.abortTransaction();
-      return res
-        .status(400)
-        .json({ message: "There are no funds to transfer." });
+      return res.status(400).json({ message: "There are no funds to transfer." });
     }
 
     if (user.balance < amount) {
-      await session.abortTransaction();
       return res.status(400).json({
         message:
           "Current balance can't withstand a withdrawal amount exceeding balance.",
       });
     }
-    await Transaction.create(
-      [
-        {
-          userId: id,
-          amount: amount,
-          walletID,
-          time: new Date(),
-          type: "deposit",
-          status: "completed",
-        },
-      ],
-      { session }
-    );
+
+    const referrence = generateTransactionReference();
+    await Transaction.create({
+      userId: id,
+      amount: amount,
+      walletID,
+      time: new Date(),
+      referrence,
+      type: "transfer",
+      status: "completed",
+    });
 
     user.PreviousBalance = user.balance;
     user.balance = user.balance - parseFloat(amount);
     await user.save();
-    await user.save({ session });
 
     userFunded.PreviousBalance = userFunded.balance;
     userFunded.balance = userFunded.balance + parseFloat(amount);
-    await userFunded.save({ session });
+    await userFunded.save();
 
-    await session.commitTransaction();
+    const userUpdated = await User.findOne({ _id: id });
+    const data = await Transaction.find({userId: id});
     return res.status(200).json({
-      message: "User successfully funded.",
+      message: "Transaction created successfully.",
+       user: userUpdated, 
+      data
     });
   } catch (error) {
-    await session.abortTransaction();
     res.status(500).json({ message: "Internal server error", error });
-  } finally {
-    session.endSession();
   }
 };
 exports.all = async (req, res) => {

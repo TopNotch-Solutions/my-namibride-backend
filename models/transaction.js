@@ -21,11 +21,11 @@ const transactionSchema = new mongoose.Schema(
     },
     referrence: {
       type: String,
-      required: true,
+      required: false,
     },
     type: {
       type: String,
-      enum: ["deposit", "withdrawal", "earning"],
+      enum: ["deposit", "withdrawal", "earning", "transfer"],
       default: "deposit",
       required: true,
     },
