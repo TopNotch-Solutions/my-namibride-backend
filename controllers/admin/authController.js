@@ -2,6 +2,8 @@ const Admin = require("../../models/admin");
 const bcrypt = require("bcrypt");
 const CapitalizeFirstLetter = require("../../utils/capitalizeFirstLetter");
 const generateRandomString = require("../../utils/generateRandomString");
+const path = require("path");
+const fs = require("fs");
 
 exports.create = async (req, res) => {
   const { firstName, lastName, email, department, contactNumber, role } =
@@ -201,34 +203,48 @@ exports.changePassword = async (req, res) => {
 };
 
 exports.updateProfileImage = async (req, res) => {
-  let { id } = req.params;
-  let { profileImage } = req.file ? req.file.filename : null;
-  console.log(id, "user id");
-  console.log(profileImage, "profileImage");
+  const { id } = req.params;
+  const profileImage = req.file ? req.file.filename : null;
+
   if (!profileImage || !id) {
     return res
       .status(400)
       .json({ status: "FAILURE", message: "Input fields empty" });
   }
-  
+
   try {
-    const updateAdmin = await Admin.findByIdAndUpdate(
-      { _id: id },
-      {
-        profileImage,
-      },
+    const user = await Admin.findOne({_id: id});
+    if(!user){
+      return res.status(404).json({ message: "User does not exist" });
+    }
+
+    if(user && user.profileImage){
+      const profileImagePath = path.join("public", "profiles", user.profileImage);
+      if (fs.existsSync(profileImagePath)) {
+        fs.unlinkSync(profileImagePath);
+      }
+    }
+    const updatedAdmin = await Admin.findByIdAndUpdate(
+      id,
+      { profileImage },
       { new: true }
     );
+
+    if (!updatedAdmin) {
+      return res
+        .status(404)
+        .json({ status: "FAILURE", message: "Admin not found" });
+    }
 
     return res
       .status(200)
       .json({
         status: "SUCCESS",
-        message: "Admin created successfully",
-        data: updateAdmin,
+        message: "Profile image updated successfully",
+        data: updatedAdmin,
       });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return res.status(500).json({ message: "Internal server error", error });
   }
 };
