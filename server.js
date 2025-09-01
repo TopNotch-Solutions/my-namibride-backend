@@ -14,6 +14,7 @@ const issuePassagerRouter = require("./routes/passager/issueRoute");
 const issueDriverRouter = require("./routes/driver/issueRoute");
 const transactionPassagerRouter = require("./routes/passager/transactionRouter");
 const transactionDriverRouter = require("./routes/driver/transactionRouter");
+const authAdminRouter = require("./routes/admin/authController");
 
 const app = express();
 const server = http.createServer(app);
@@ -34,6 +35,8 @@ app.use(
     credentials: true,
   })
 );
+
+app.use("/portal", authAdminRouter)
 
 app.use("/passager/auth", passagerRouter);
 app.use("/passager/issue", issuePassagerRouter);
@@ -59,8 +62,3 @@ mongoose
   .catch((error) => {
     console.error("Error connecting to MongoDB:", error);
   });
-
-// const PORT = process.env.PORT;
-// server.listen(PORT, () => {
-//   console.log(`Server is running on port ${PORT}`);
-// });
